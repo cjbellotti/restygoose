@@ -5,6 +5,13 @@ var express = require('express'),
 
 var definitions = {};
 
+function extractModelName (url, prefixURL, sufixURL) {
+
+	return url.substring(url.indexOf(prefixURL) + prefixURL.length + 1, 
+												url.indexOf(sufixURL));
+
+}
+
 var Restygoose = function(config) {
 
 	if (config == null)
@@ -36,6 +43,8 @@ var Restygoose = function(config) {
 
 		model.fields = config.mongooseDef.models[model.name].schema.paths;
 
+		model.def = config.mongooseDef.models[model.name];
+
 		definitions[model.name] = model;
 
 		var keys = "";
@@ -52,14 +61,48 @@ var Restygoose = function(config) {
 		
 		var baseURL = config.prefixURL + '/' + model.name + config.sufixURL;
 
-		var url = baseURL + keys;
+		var url = baseURL
 		console.log('Generating GET for %s (%s)...', model.name, url);
 		app.get(url, function (req, res) {
+
+			// Extract model name from the url
+			var modelName = extractModelName(req.url, config.prefixURL, config.sufixURL);
+			var mongooseModel = config.mongooseDef.models[modelName];
+
+			var search = {};
+
+			mongooseModel.find(search, function (err, data) {
+
+				if (err) {
+
+					res.json({ error : "can't to get data",
+								description : err })
+						.end();
+
+				} else {
+
+					res.json(data)
+						.end();
+
+				}
+
+			});
+
+		});
+
+		url = baseURL + keys;
+		console.log('Generating GET for %s (%s)...', model.name, url);
+		app.get(url, function (req, res) {
+
+			// Extract model name from the url
+			var modelName = extractModelName(req.url, config.prefixURL, config.sufixURL);
+			var mongooseModel = config.mongooseDef.models[modelName];
 
 			var search = {};
 
 			for (var key in req.params) {
-				search[key] = req.params[key];
+				if (req.params[key])
+					search[key] = req.params[key];
 			}
 
 
@@ -80,12 +123,15 @@ var Restygoose = function(config) {
 
 			});
 
-
 		});
 
 		url = baseURL;
 		console.log('Generating POST for %s (%s)...', model.name, url);
 		app.post(url, function (req, res) {
+
+			// Extract model name from the url
+			var modelName = extractModelName(req.url, config.prefixURL, config.sufixURL);
+			var mongooseModel = config.mongooseDef.models[modelName];
 
 			var newData = {};
 
@@ -95,7 +141,7 @@ var Restygoose = function(config) {
 
 			var schema = new mongooseModel(newData);
 
-			schema.save(function(err) {
+			schema.save(function(err, doc) {
 
 				if (err) {
 
@@ -105,7 +151,7 @@ var Restygoose = function(config) {
 
 				} else {
 
-					res.json(newData)
+					res.json(doc)
 						.end();
 
 				}
@@ -118,7 +164,34 @@ var Restygoose = function(config) {
 		console.log('Generating PUT for %s (%s)...', model.name, url);
 		app.put(url, function (req, res) {
 
-			res.end('PUT of ' + model.name);
+			// Extract model name from the url
+			var modelName = extractModelName(req.url, config.prefixURL, config.sufixURL);
+			var mongooseModel = config.mongooseDef.models[modelName];
+
+			var toUpdate = {};
+
+	 		for (var key in req.body) {
+	 			if (model.fields[key] != undefined)
+	 				toUpdate[key] = req.body[key];
+	 		}
+
+			mongooseModel.findOneAndUpdate(req.params, toUpdate, { upsert : true}, function (err, data) {
+
+				if (err) {
+
+					res.json({ error : "can't to get data",
+								description : err })
+						.end();
+
+				} else {
+
+					res.json(data)
+						.end();
+
+				}
+
+			});
+
 
 		});
 
@@ -126,7 +199,26 @@ var Restygoose = function(config) {
 		console.log('Generating DELETE for %s (%s)...', model.name, url);
 		app.delete(url, function (req, res) {
 
-			res.end('DELETE of ' + model.name);
+			// Extract model name from the url
+			var modelName = extractModelName(req.url, config.prefixURL, config.sufixURL);
+			var mongooseModel = config.mongooseDef.models[modelName];
+
+			mongooseModel.findOneAndRemove(req.params, {}, function (err, data) {
+
+				if (err) {
+
+					res.json({ error : "can't to remove data",
+								description : err })
+						.end();
+
+				} else {
+
+					res.json(data)
+						.end();
+
+				}
+
+			});
 
 		});
 
