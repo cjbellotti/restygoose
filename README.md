@@ -7,7 +7,8 @@ This generate an instance of express with the API REST to manipulate mongoose mo
 ## Example
 
 ```javascript
-var Restify = require('restify');
+var Restify = require('restygoose');
+var app = require('express')();
 
 var customers = new Schema({
 	id : { type : Number },
@@ -42,6 +43,9 @@ var config = {
 };
 
 var api = new Restify(config);
+app.use(api);
+app.listen(3000);
+
 ```
 with this you can get the following API REST
 
