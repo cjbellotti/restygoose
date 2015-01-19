@@ -1,6 +1,6 @@
 {
   "name": "restygoose",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Restify MongoDB Schemas",
   "main": "index.js",
   "scripts": {
@@ -25,5 +25,11 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/cjbellotti/restygoose"
-  }
+  },
+  "keywords": [
+    "rest",
+    "mongoose",
+    "mongodb",
+    "express"
+  ]
 }
